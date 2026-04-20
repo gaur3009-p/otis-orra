@@ -1,0 +1,8 @@
+{
+  "name": "@orra/shared",
+  "version": "0.1.0",
+  "main": "index.js",
+  "dependencies": {
+    "winston": "^3.11.0"
+  }
+}

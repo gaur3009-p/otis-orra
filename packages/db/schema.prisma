@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id          String      @id @default(cuid())
+  name        String
+  email       String      @unique
+  apiKey        String      @unique @default(cuid())
+  passwordHash  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  assistants  Assistant[]
+  leads       Lead[]
+  websiteData WebsiteData[]
+}
+
+model Assistant {
+  id            String    @id @default(cuid())
+  businessId    String
+  business      Business  @relation(fields: [businessId], references: [id])
+  name          String    @default("Orra")
+  voice         String    @default("nova")
+  tone          String    @default("friendly")
+  websiteUrl    String
+  crawlStatus   String    @default("pending") // pending | crawling | done | error
+  leadCapture   Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  conversations Conversation[]
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  assistantId String
+  assistant   Assistant @relation(fields: [assistantId], references: [id])
+  sessionId   String    @unique
+  messages    Json      @default("[]")
+  context     Json      @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lead        Lead?
+}
+
+model Lead {
+  id             String       @id @default(cuid())
+  businessId     String
+  business       Business     @relation(fields: [businessId], references: [id])
+  conversationId String?      @unique
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  name           String?
+  email          String?
+  phone          String?
+  intent         String?
+  queryContext   String?
+  createdAt      DateTime     @default(now())
+}
+
+model WebsiteData {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+  url        String
+  title      String?
+  content    String   @db.Text
+  embedding  String?  // Pinecone vector ID
+  createdAt  DateTime @default(now())
+}

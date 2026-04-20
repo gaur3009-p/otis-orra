@@ -1,0 +1,14 @@
+{
+  "name": "orra",
+  "private": true,
+  "workspaces": ["apps/*", "services/*", "packages/*"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=apps/dashboard\" \"npm run dev --workspace=apps/api-gateway\" \"npm run dev --workspace=services/voice\" \"npm run dev --workspace=services/llm\" \"npm run dev --workspace=services/retrieval\" \"npm run dev --workspace=services/lead\"",
+    "build": "npm run build --workspace=apps/dashboard",
+    "db:push": "npm run db:push --workspace=packages/db",
+    "db:studio": "npm run studio --workspace=packages/db"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

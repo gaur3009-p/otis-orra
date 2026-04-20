@@ -1,0 +1,136 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: orra
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api-gateway:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.node
+      args:
+        SERVICE_PATH: apps/api-gateway
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file: ../../.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/orra
+      REDIS_URL: redis://redis:6379
+      RETRIEVAL_SERVICE_URL: http://retrieval:3002
+      API_GATEWAY_PORT: "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  voice:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.node
+      args:
+        SERVICE_PATH: services/voice
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    env_file: ../../.env
+    environment:
+      LLM_SERVICE_URL: http://llm:3003
+      VOICE_PORT: "3001"
+    depends_on:
+      - llm
+
+  retrieval:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.node
+      args:
+        SERVICE_PATH: services/retrieval
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    env_file: ../../.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/orra
+      RETRIEVAL_PORT: "3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  llm:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.node
+      args:
+        SERVICE_PATH: services/llm
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    env_file: ../../.env
+    environment:
+      REDIS_URL: redis://redis:6379
+      RETRIEVAL_SERVICE_URL: http://retrieval:3002
+      LLM_PORT: "3003"
+    depends_on:
+      redis:
+        condition: service_healthy
+      retrieval:
+        condition: service_started
+
+  lead:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.node
+      args:
+        SERVICE_PATH: services/lead
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    env_file: ../../.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/orra
+      LEAD_PORT: "3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: ../../apps/dashboard
+      dockerfile: ../../infra/docker/Dockerfile.dashboard
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    env_file: ../../.env
+
+volumes:
+  postgres_data:
+  redis_data:

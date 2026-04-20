@@ -1,0 +1,10 @@
+{
+  "name": "@orra/widget",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "esbuild index.js --bundle --minify --outfile=dist/widget.js --format=iife --global-name=OrraWidget",
+    "dev": "esbuild index.js --bundle --outfile=dist/widget.dev.js --format=iife --global-name=OrraWidget --watch"
+  },
+  "devDependencies": { "esbuild": "^0.20.0" }
+}

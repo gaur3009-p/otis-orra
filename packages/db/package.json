@@ -1,0 +1,16 @@
+{
+  "name": "@orra/db",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": {
+    "db:push": "prisma db push",
+    "studio": "prisma studio",
+    "generate": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.10.0"
+  }
+}

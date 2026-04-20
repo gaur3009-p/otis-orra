@@ -1,0 +1,17 @@
+{
+  "name": "@orra/retrieval",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": { "dev": "nodemon index.js", "start": "node index.js" },
+  "dependencies": {
+    "@orra/db": "*",
+    "@orra/shared": "*",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "express": "^4.18.2",
+    "openai": "^4.28.0",
+    "@pinecone-database/pinecone": "^2.0.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": { "nodemon": "^3.0.0" }
+}

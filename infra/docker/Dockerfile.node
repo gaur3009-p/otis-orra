@@ -1,0 +1,15 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+
+# Copy root workspace files
+COPY package.json ./
+COPY packages/ ./packages/
+
+ARG SERVICE_PATH
+COPY ${SERVICE_PATH}/ ./${SERVICE_PATH}/
+
+# Install all workspace dependencies
+RUN npm install --workspace=${SERVICE_PATH} --include-workspace-root
+
+WORKDIR /app/${SERVICE_PATH}
+CMD ["node", "index.js"]

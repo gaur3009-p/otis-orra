@@ -1,0 +1,18 @@
+{
+  "name": "@orra/api-gateway",
+  "version": "0.1.0",
+  "main": "index.js",
+  "scripts": { "dev": "nodemon index.js", "start": "node index.js" },
+  "dependencies": {
+    "@orra/db": "*",
+    "@orra/shared": "*",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "axios": "^1.6.0",
+    "dotenv": "^16.4.0",
+    "express-rate-limit": "^7.2.0"
+  },
+  "devDependencies": { "nodemon": "^3.0.0" }
+}
