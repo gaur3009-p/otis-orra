@@ -1,0 +1,46 @@
+{
+  "name": "Orra Dev",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+
+  "features": {
+    "ghcr.io/prulloac/devcontainer-features/ollama:1": {}
+  },
+
+  "hostRequirements": {
+    "memory": "16gb",
+    "cpus": 4
+  },
+
+  "forwardPorts": [3000, 3001, 3002, 3003, 3004, 5173, 5432, 6379, 11434],
+
+  "portsAttributes": {
+    "3000": { "label": "API Gateway",  "onAutoForward": "notify" },
+    "3001": { "label": "Voice / WS",   "onAutoForward": "notify" },
+    "3002": { "label": "Retrieval",    "onAutoForward": "silent" },
+    "3003": { "label": "LLM",          "onAutoForward": "silent" },
+    "3004": { "label": "Lead service", "onAutoForward": "silent" },
+    "5173": { "label": "Dashboard",    "onAutoForward": "openBrowser" },
+    "11434":{ "label": "Ollama",       "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "Prisma.prisma",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "remoteUser": "vscode"
+}
