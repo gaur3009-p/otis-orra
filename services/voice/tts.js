@@ -1,40 +1,34 @@
-require('dotenv').config();
+// No npm package needed — Kokoro runs as a local HTTP server (Docker)
+// KOKORO_URL=http://localhost:8300 in your .env
+
 const { logger } = require('@orra/shared');
 
-const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-const ELEVENLABS_VOICE_IDS = {
-  alloy:    'EXAVITQu4vr4xnSDxMaL',
-  echo:     'VR6AewLTigWG4xSOukaG',
-  fable:    'pNInz6obpgDQGcFmaJgB',
-  onyx:     'yoZ06aMxZJJ28mfd3POQ',
-  nova:     'Xb7hH8MSUJpSbSDYk0k2',
-  shimmer:  'jsCqWAovK2LkecY7zXl4',
+// Kokoro voice IDs (26 voices available)
+const VOICE_MAP = {
+  alloy:   'af_alloy',
+  echo:    'am_echo',
+  fable:   'bf_emma',
+  onyx:    'am_onyx',
+  nova:    'af_nova',
+  shimmer: 'af_shimmer',
 };
 
 async function textToSpeech(text, voiceId = 'nova') {
-  const elevenVoiceId = ELEVENLABS_VOICE_IDS[voiceId] || ELEVENLABS_VOICE_IDS.nova;
+  const kokoroVoice = VOICE_MAP[voiceId] || VOICE_MAP.nova;
+  const kokoroUrl = process.env.KOKORO_URL || 'http://localhost:8300';
 
   try {
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${elevenVoiceId}/stream`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': ELEVENLABS_API_KEY,
-          'Content-Type': 'application/json',
-          'Accept': 'audio/mpeg',
-        },
-        body: JSON.stringify({
-          text,
-          model_id: 'eleven_turbo_v2',
-          voice_settings: { stability: 0.5, similarity_boost: 0.8 },
-        }),
-      }
-    );
+    const response = await fetch(`${kokoroUrl}/api/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text,
+        voice: kokoroVoice,
+        speed: 1.0,
+      }),
+    });
 
-    if (!response.ok) {
-      throw new Error(`ElevenLabs error: ${response.status} ${response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Kokoro TTS error: ${response.status}`);
 
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);
