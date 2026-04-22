@@ -3,7 +3,10 @@ const OpenAI = require('openai');
 const { Pinecone } = require('@pinecone-database/pinecone');
 const { logger } = require('@orra/shared');
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+  baseURL: `${process.env.OLLAMA_BASE_URL || 'http://localhost:11434'}/v1`,
+  apiKey: 'ollama',
+});
 
 let pinecone;
 let index;
