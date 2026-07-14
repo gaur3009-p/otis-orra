@@ -6,5 +6,7 @@
     "build": "esbuild index.js --bundle --minify --outfile=dist/widget.js --format=iife --global-name=OrraWidget",
     "dev": "esbuild index.js --bundle --outfile=dist/widget.dev.js --format=iife --global-name=OrraWidget --watch"
   },
-  "devDependencies": { "esbuild": "^0.20.0" }
+  "devDependencies": {
+    "esbuild": "^0.28.0"
+  }
 }

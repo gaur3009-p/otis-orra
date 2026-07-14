@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import api from '../api';
+import { PageHeader, Card, CardBody, CardHeader, Badge, CodeBlock } from '../components/UI';
 
 export default function Deploy() {
   const { auth } = useAuth();
@@ -25,10 +26,16 @@ export default function Deploy() {
 
   const snippetNPM = `// npm install @orra/widget
 import { initOrra } from '@orra/widget';
-initOrra({ clientId: '${apiKey}', apiUrl: '${apiUrl}', wsUrl: '${wsUrl}' });`;
+
+initOrra({ 
+  clientId: '${apiKey}', 
+  apiUrl: '${apiUrl}', 
+  wsUrl: '${wsUrl}' 
+});`;
 
   const snippetNextjs = `// pages/_app.js or app/layout.js
 import Script from 'next/script';
+
 export default function Layout({ children }) {
   return (
     <>
@@ -51,103 +58,116 @@ export default function Layout({ children }) {
     });
   }
 
-  const card = { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' };
-  const cardHeader = { padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' };
-
   return (
-    <div className="fade-in" style={{ padding: '40px 48px', maxWidth: 820, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.7px', marginBottom: 6 }}>Deploy</h1>
-      <p style={{ color: 'var(--text2)', fontSize: 15, marginBottom: 36 }}>Add your AI assistant to your website with one of these install methods.</p>
+    <div className="fade-up" style={{ padding: '40px 48px', maxWidth: 840, margin: '0 auto' }}>
+      <PageHeader
+        title="Deploy Widget"
+        subtitle="Go live by integrating your AI Voice Assistant snippet using any of our supported methods."
+      />
 
-      {/* Status */}
-      {assistant && (
-        <div style={{
-          marginBottom: 28, padding: '14px 18px', borderRadius: 10,
-          background: assistant.crawlStatus === 'done' ? 'rgba(52,211,153,0.08)' : 'rgba(251,191,36,0.08)',
-          border: `1px solid ${assistant.crawlStatus === 'done' ? 'rgba(52,211,153,0.25)' : 'rgba(251,191,36,0.25)'}`,
-          display: 'flex', alignItems: 'center', gap: 12,
-        }}>
-          <span style={{ fontSize: 18 }}>{assistant.crawlStatus === 'done' ? '✅' : '⏳'}</span>
-          <div>
-            <div style={{ fontWeight: 500, fontSize: 14 }}>
-              {assistant.crawlStatus === 'done' ? 'Assistant ready for deployment' : 'Assistant is still being trained…'}
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>
-              Training site: <span style={{ fontFamily: 'var(--mono)', color: 'var(--accent2)' }}>{assistant.websiteUrl}</span>
-            </div>
-          </div>
-        </div>
-      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
-      {/* API Key */}
-      <div style={{ ...card, marginBottom: 20 }}>
-        <div style={cardHeader}>
-          <span style={{ fontWeight: 600, fontSize: 15 }}>Your API Key</span>
-          <span style={{ fontSize: 11, color: 'var(--text3)', background: 'var(--surface)', padding: '3px 8px', borderRadius: 6 }}>Keep this secret</span>
-        </div>
-        <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <code style={{
-            flex: 1, fontFamily: 'var(--mono)', fontSize: 13,
-            color: 'var(--accent2)', background: 'var(--surface)', padding: '10px 14px',
-            borderRadius: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>{apiKey}</code>
-          <button onClick={() => copy(apiKey, 'key')} style={{
-            padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border2)',
-            background: copied === 'key' ? 'rgba(52,211,153,0.15)' : 'var(--surface)',
-            color: copied === 'key' ? 'var(--green)' : 'var(--text2)', fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap',
-          }}>{copied === 'key' ? '✓ Copied' : 'Copy'}</button>
-        </div>
-      </div>
-
-      {/* Method 1: Script Tag */}
-      {[
-        { id: 'script', title: '1. HTML Script Tag', subtitle: 'Paste before </body> on any page', code: snippetScript },
-        { id: 'npm',    title: '2. NPM Package',     subtitle: 'For React, Vue, and SPA frameworks', code: snippetNPM },
-        { id: 'next',   title: '3. Next.js',          subtitle: 'App Router or Pages Router', code: snippetNextjs },
-      ].map(m => (
-        <div key={m.id} style={{ ...card, marginBottom: 16 }}>
-          <div style={cardHeader}>
+        {/* Sync Status Banner */}
+        {assistant && (
+          <div style={{
+            padding: '16px 20px',
+            borderRadius: 12,
+            background: assistant.crawlStatus === 'done' ? 'var(--green-bg)' : 'var(--amber-bg)',
+            border: `1px solid ${assistant.crawlStatus === 'done' ? 'rgba(34,208,122,0.25)' : 'rgba(245,166,35,0.25)'}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 14,
+          }}>
+            <span style={{ fontSize: 22 }}>
+              {assistant.crawlStatus === 'done' ? '✨' : '⏳'}
+            </span>
             <div>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>{m.title}</div>
-              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{m.subtitle}</div>
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#fff' }}>
+                {assistant.crawlStatus === 'done' ? 'Assistant Core Fully Trained' : 'Assistant training in progress...'}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text2)', marginTop: 2 }}>
+                Model source url reference: <span style={{ fontFamily: 'var(--mono)', color: 'var(--violet-light)' }}>{assistant.websiteUrl}</span>
+              </div>
             </div>
-            <button onClick={() => copy(m.code, m.id)} style={{
-              padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border2)',
-              background: copied === m.id ? 'rgba(52,211,153,0.15)' : 'var(--surface)',
-              color: copied === m.id ? 'var(--green)' : 'var(--text2)', fontSize: 13, fontWeight: 500,
-            }}>{copied === m.id ? '✓ Copied' : 'Copy Code'}</button>
           </div>
-          <pre style={{
-            margin: 0, padding: '16px 20px', fontFamily: 'var(--mono)', fontSize: 12,
-            color: 'var(--text2)', background: 'var(--bg)', overflow: 'auto', lineHeight: 1.6,
-          }}>{m.code}</pre>
-        </div>
-      ))}
+        )}
 
-      {/* Checklist */}
-      <div style={{ ...card, marginTop: 24 }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', fontWeight: 600, fontSize: 15 }}>
-          Deployment Checklist
-        </div>
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {[
-            { done: assistant?.crawlStatus === 'done', label: 'Website crawled and AI trained' },
-            { done: true, label: 'API key generated' },
-            { done: !!assistant?.name, label: `Assistant named "${assistant?.name || 'Orra'}"` },
-            { done: true, label: 'Lead capture configured' },
-          ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14 }}>
-              <div style={{
-                width: 22, height: 22, borderRadius: '50%',
-                background: item.done ? 'rgba(52,211,153,0.15)' : 'var(--surface2)',
-                border: `1px solid ${item.done ? 'var(--green)' : 'var(--border2)'}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, color: 'var(--green)', flexShrink: 0,
-              }}>{item.done ? '✓' : ''}</div>
-              <span style={{ color: item.done ? 'var(--text)' : 'var(--text3)' }}>{item.label}</span>
-            </div>
-          ))}
-        </div>
+        {/* API Credentials */}
+        <Card>
+          <CardHeader>
+            <span style={{ fontWeight: 700, fontSize: 14.5 }}>🔑 Client API Key</span>
+            <Badge variant="violet">Development / Production</Badge>
+          </CardHeader>
+          <CardBody style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <code style={{
+              flex: 1, fontFamily: 'var(--mono)', fontSize: 13,
+              color: 'var(--violet-light)', background: 'var(--bg)', padding: '10px 14px',
+              borderRadius: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              border: '1px solid var(--border)',
+            }}>{apiKey}</code>
+            <button
+              onClick={() => copy(apiKey, 'key')}
+              style={{
+                padding: '10px 18px', borderRadius: 8,
+                background: copied === 'key' ? 'var(--green-bg)' : 'var(--surface)',
+                border: `1px solid ${copied === 'key' ? 'rgba(34,208,122,0.3)' : 'var(--border2)'}`,
+                color: copied === 'key' ? 'var(--green)' : 'var(--text2)',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.18s',
+              }}
+            >
+              {copied === 'key' ? '✓ Copied' : 'Copy Key'}
+            </button>
+          </CardBody>
+        </Card>
+
+        {/* Deployment Methods */}
+        {[
+          { id: 'script', title: '🌐 Method 1: HTML Script Tag', subtitle: 'Paste this snippet at the end of your <body> tags.', code: snippetScript },
+          { id: 'npm',    title: '📦 Method 2: NPM Package Integration', subtitle: 'For Single Page Applications (SPA) built with React or Vue.', code: snippetNPM },
+          { id: 'next',   title: '⚡ Method 3: Next.js Layout Script', subtitle: 'Utilize next/script tag with interactive strategy.', code: snippetNextjs },
+        ].map(m => (
+          <Card key={m.id}>
+            <CardHeader>
+              <div>
+                <span style={{ fontWeight: 700, fontSize: 14.5 }}>{m.title}</span>
+                <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{m.subtitle}</p>
+              </div>
+            </CardHeader>
+            <CodeBlock
+              code={m.code}
+              onCopy={() => copy(m.code, m.id)}
+              copied={copied === m.id}
+            />
+          </Card>
+        ))}
+
+        {/* Deployment checklist */}
+        <Card>
+          <CardHeader>
+            <span style={{ fontWeight: 700, fontSize: 14.5 }}>✅ Readiness Checklist</span>
+          </CardHeader>
+          <CardBody style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {[
+              { done: assistant?.crawlStatus === 'done', label: 'Website content indexed into vector space' },
+              { done: true, label: 'Client API Key generated successfully' },
+              { done: !!assistant?.name, label: `Assistant configuration initialized with name "${assistant?.name || 'Orra'}"` },
+              { done: assistant?.leadCapture, label: 'Lead Capture settings successfully activated' },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13.5 }}>
+                <div style={{
+                  width: 22, height: 22, borderRadius: '50%',
+                  background: item.done ? 'var(--green-bg)' : 'var(--bg3)',
+                  border: `1px solid ${item.done ? 'var(--green)' : 'var(--border2)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, color: 'var(--green)', flexShrink: 0,
+                  transition: 'all 0.18s',
+                }}>{item.done ? '✓' : ''}</div>
+                <span style={{ color: item.done ? 'var(--text)' : 'var(--text3)', fontWeight: item.done ? 500 : 400 }}>{item.label}</span>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+
       </div>
     </div>
   );

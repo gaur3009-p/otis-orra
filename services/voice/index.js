@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const http = require('http');
 const express = require('express');
 const { WebSocketServer } = require('ws');
@@ -35,13 +35,18 @@ wss.on('connection', (ws, req) => {
           sessionId, userMessage: transcript, businessId, assistantConfig, pageContext,
         });
 
-        const { reply, intent } = data;
-        ws.send(JSON.stringify({ type: 'reply_text', text: reply, intent }));
+        const { reply, intent, retrievedChunks } = data;
+        ws.send(JSON.stringify({ type: 'reply_text', text: reply, intent, retrievedChunks }));
 
         // TTS
-        const audioBuffer = await textToSpeech(reply, assistantConfig.voice || 'nova');
-        const base64Audio = audioBuffer.toString('base64');
-        ws.send(JSON.stringify({ type: 'audio', data: base64Audio, mimeType: 'audio/mpeg' }));
+        try {
+          const audioBuffer = await textToSpeech(reply, assistantConfig.voice || 'nova');
+          const base64Audio = audioBuffer.toString('base64');
+          ws.send(JSON.stringify({ type: 'audio', data: base64Audio, mimeType: 'audio/mpeg' }));
+        } catch (ttsErr) {
+          logger.warn(`ElevenLabs TTS failed: ${ttsErr.message}. Emitting tts_fallback event.`);
+          ws.send(JSON.stringify({ type: 'tts_fallback', text: reply }));
+        }
 
         // Trigger lead capture signal
         if (intent === 'high_intent' && assistantConfig.leadCapture) {
@@ -75,10 +80,15 @@ wss.on('connection', (ws, req) => {
         axios.post(`${LLM_URL}/respond`, {
           sessionId, userMessage: msg.text, businessId, assistantConfig, pageContext,
         }).then(async ({ data }) => {
-          const { reply, intent } = data;
-          ws.send(JSON.stringify({ type: 'reply_text', text: reply, intent }));
-          const audioBuffer = await textToSpeech(reply, assistantConfig.voice || 'nova');
-          ws.send(JSON.stringify({ type: 'audio', data: audioBuffer.toString('base64'), mimeType: 'audio/mpeg' }));
+          const { reply, intent, retrievedChunks } = data;
+          ws.send(JSON.stringify({ type: 'reply_text', text: reply, intent, retrievedChunks }));
+          try {
+            const audioBuffer = await textToSpeech(reply, assistantConfig.voice || 'nova');
+            ws.send(JSON.stringify({ type: 'audio', data: audioBuffer.toString('base64'), mimeType: 'audio/mpeg' }));
+          } catch (ttsErr) {
+            logger.warn(`ElevenLabs TTS failed: ${ttsErr.message}. Emitting tts_fallback event.`);
+            ws.send(JSON.stringify({ type: 'tts_fallback', text: reply }));
+          }
           if (intent === 'high_intent' && assistantConfig.leadCapture) {
             ws.send(JSON.stringify({ type: 'lead_capture_trigger' }));
           }

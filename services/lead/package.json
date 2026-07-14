@@ -2,13 +2,19 @@
   "name": "@orra/lead",
   "version": "0.1.0",
   "main": "index.js",
-  "scripts": { "dev": "nodemon index.js", "start": "node index.js" },
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
   "dependencies": {
     "@orra/db": "*",
     "@orra/shared": "*",
+    "dotenv": "^16.4.0",
+    "esbuild": "0.28.0",
     "express": "^4.18.2",
-    "nodemailer": "^6.9.9",
-    "dotenv": "^16.4.0"
+    "nodemailer": "^8.0.10"
   },
-  "devDependencies": { "nodemon": "^3.0.0" }
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
 }

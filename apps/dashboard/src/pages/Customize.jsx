@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
+import { PageHeader, Card, CardBody, Btn, Field, Input, Toggle, Badge, Spinner } from '../components/UI';
 
-const VOICES = ['alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'];
+const VOICES = [
+  { id: 'alloy',   label: 'Alloy',   desc: 'Balanced & clear' },
+  { id: 'echo',    label: 'Echo',    desc: 'Resonant & warm' },
+  { id: 'fable',   label: 'Fable',   desc: 'Expressive & lively' },
+  { id: 'onyx',    label: 'Onyx',    desc: 'Deep & authoritative' },
+  { id: 'nova',    label: 'Nova',    desc: 'Bright & energetic' },
+  { id: 'shimmer', label: 'Shimmer', desc: 'Soft & melodic' },
+];
+
 const TONES = [
-  { id: 'friendly',     label: 'Friendly',     desc: 'Warm, conversational, approachable' },
-  { id: 'professional', label: 'Professional',  desc: 'Clear, formal, authoritative' },
-  { id: 'premium',      label: 'Premium',       desc: 'Refined, elegant, concierge-level' },
-  { id: 'casual',       label: 'Casual',        desc: 'Relaxed, natural, like a friend' },
-  { id: 'technical',    label: 'Technical',     desc: 'Precise, detailed, expert-level' },
+  { id: 'friendly',     emoji: '😊', label: 'Friendly',     desc: 'Warm, conversational, approachable' },
+  { id: 'professional', emoji: '💼', label: 'Professional',  desc: 'Clear, formal, authoritative' },
+  { id: 'premium',      emoji: '✨', label: 'Premium',       desc: 'Refined, elegant, concierge-level' },
+  { id: 'casual',       emoji: '👋', label: 'Casual',        desc: 'Relaxed, natural, like a friend' },
+  { id: 'technical',    emoji: '⚙️', label: 'Technical',     desc: 'Precise, detailed, expert-level' },
 ];
 
 export default function Customize() {
@@ -30,7 +39,8 @@ export default function Customize() {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   async function save(e) {
-    e.preventDefault(); setError(''); setLoading(true); setSaved(false);
+    e.preventDefault();
+    setError(''); setLoading(true); setSaved(false);
     try {
       await api.post('/business/assistant', form);
       setSaved(true);
@@ -40,106 +50,190 @@ export default function Customize() {
     } finally { setLoading(false); }
   }
 
-  const card = { background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 24 };
-  const label = { fontSize: 13, fontWeight: 500, color: 'var(--text2)', marginBottom: 10, display: 'block' };
-  const inp = {
-    width: '100%', padding: '10px 14px', borderRadius: 10,
-    border: '1px solid var(--border2)', background: 'var(--surface)',
-    color: 'var(--text)', fontSize: 14, outline: 'none',
-  };
-
   return (
-    <div className="fade-in" style={{ padding: '40px 48px', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.7px', marginBottom: 6 }}>Customize Assistant</h1>
-      <p style={{ color: 'var(--text2)', fontSize: 15, marginBottom: 36 }}>Set your assistant's identity, voice, and behavior.</p>
-
-      <form onSubmit={save} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-        {/* Name */}
-        <div style={card}>
-          <label style={label}>Assistant Name</label>
-          <input style={inp} value={form.name} onChange={e => set('name', e.target.value)}
-            placeholder="e.g. Aria, Max, Zoe" maxLength={30} />
-          <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 8 }}>This is what visitors will see and hear.</p>
-        </div>
-
-        {/* Voice */}
-        <div style={card}>
-          <label style={label}>Voice</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-            {VOICES.map(v => (
-              <button key={v} type="button" onClick={() => set('voice', v)} style={{
-                padding: '10px 0', borderRadius: 10, border: `1px solid ${form.voice === v ? 'var(--accent)' : 'var(--border2)'}`,
-                background: form.voice === v ? 'rgba(124,110,245,0.12)' : 'var(--surface)',
-                color: form.voice === v ? 'var(--accent2)' : 'var(--text2)',
-                fontWeight: form.voice === v ? 600 : 400, fontSize: 14,
-                transition: 'all 0.15s', cursor: 'pointer', textTransform: 'capitalize',
-              }}>{v}</button>
-            ))}
+    <div className="fade-up" style={{ padding: '40px 48px', maxWidth: 760, margin: '0 auto' }}>
+      <PageHeader
+        title="Customize Assistant"
+        subtitle="Configure your AI's identity, voice, and behavior."
+        action={
+          <div style={{ display: 'flex', gap: 10 }}>
+            <Btn variant="secondary" onClick={() => navigate('/deploy')}>Deploy →</Btn>
+            <Btn type="submit" form="customize-form" disabled={loading} variant={saved ? 'ghost' : 'primary'}>
+              {loading ? <><Spinner size={15} /> Saving…</> : saved ? '✓ Saved!' : 'Save Changes'}
+            </Btn>
           </div>
-          <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 10 }}>Powered by ElevenLabs — each voice has a distinct character.</p>
-        </div>
+        }
+      />
 
-        {/* Tone */}
-        <div style={card}>
-          <label style={label}>Tone</label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {TONES.map(t => (
-              <button key={t.id} type="button" onClick={() => set('tone', t.id)} style={{
-                padding: '12px 16px', borderRadius: 10, border: `1px solid ${form.tone === t.id ? 'var(--accent)' : 'var(--border)'}`,
-                background: form.tone === t.id ? 'rgba(124,110,245,0.1)' : 'var(--surface)',
-                display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', textAlign: 'left',
-                transition: 'all 0.15s',
-              }}>
-                <div style={{
-                  width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
-                  background: form.tone === t.id ? 'var(--accent)' : 'var(--border2)',
-                  boxShadow: form.tone === t.id ? '0 0 8px var(--accent)' : 'none',
-                  transition: 'all 0.15s',
-                }} />
-                <div>
-                  <div style={{ fontWeight: 500, fontSize: 14, color: form.tone === t.id ? 'var(--text)' : 'var(--text2)' }}>{t.label}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text3)' }}>{t.desc}</div>
+      <form id="customize-form" onSubmit={save} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {/* Assistant Name */}
+        <Card>
+          <CardBody>
+            <Field
+              label="Assistant Name"
+              hint="This is what visitors will see and hear when interacting with your assistant."
+            >
+              <Input
+                value={form.name}
+                onChange={e => set('name', e.target.value)}
+                placeholder="e.g. Aria, Max, Zoe"
+                maxLength={30}
+              />
+            </Field>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 10,
+              marginTop: 16, padding: '10px 16px',
+              background: 'var(--violet-bg)', border: '1px solid rgba(124,92,244,0.2)',
+              borderRadius: 10,
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: 'linear-gradient(135deg, #7c5cf4, #0dd6b8)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14,
+              }}>◎</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                  {form.name || 'Orra'}
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
+                <div style={{ fontSize: 11, color: 'var(--text3)' }}>Your AI assistant</div>
+              </div>
+            </div>
+          </CardBody>
+        </Card>
 
-        {/* Lead Capture */}
-        <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontWeight: 500, fontSize: 15, marginBottom: 4 }}>Lead Capture</div>
-            <div style={{ fontSize: 13, color: 'var(--text2)' }}>Automatically collect visitor info when they show buying intent.</div>
-          </div>
-          <button type="button" onClick={() => set('leadCapture', !form.leadCapture)} style={{
-            width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer', flexShrink: 0,
-            background: form.leadCapture ? 'var(--accent)' : 'var(--surface2)',
-            position: 'relative', transition: 'background 0.2s',
+        {/* Voice Selection */}
+        <Card>
+          <CardBody>
+            <Field
+              label="Voice"
+              hint="Powered by ElevenLabs — each voice has a distinct sonic character."
+            >
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginTop: 4 }}>
+                {VOICES.map(v => {
+                  const selected = form.voice === v.id;
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => set('voice', v.id)}
+                      style={{
+                        padding: '12px 10px',
+                        borderRadius: 12,
+                        border: `1px solid ${selected ? 'rgba(124,92,244,0.55)' : 'var(--border)'}`,
+                        background: selected
+                          ? 'linear-gradient(135deg, rgba(124,92,244,0.18) 0%, rgba(13,214,184,0.1) 100%)'
+                          : 'var(--bg3)',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                        cursor: 'pointer', transition: 'all 0.18s',
+                        boxShadow: selected ? '0 0 16px rgba(124,92,244,0.25)' : 'none',
+                      }}
+                    >
+                      <div style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        background: selected ? 'var(--violet)' : 'var(--border2)',
+                        boxShadow: selected ? '0 0 8px var(--violet)' : 'none',
+                        transition: 'all 0.18s',
+                        marginBottom: 2,
+                      }} />
+                      <span style={{
+                        fontSize: 14, fontWeight: selected ? 700 : 500,
+                        color: selected ? 'var(--violet-light)' : 'var(--text2)',
+                        textTransform: 'capitalize',
+                      }}>{v.label}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text3)' }}>{v.desc}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          </CardBody>
+        </Card>
+
+        {/* Tone Selection */}
+        <Card>
+          <CardBody>
+            <Field label="Tone" hint="Define how your assistant communicates with visitors.">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {TONES.map(t => {
+                  const selected = form.tone === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => set('tone', t.id)}
+                      style={{
+                        padding: '14px 18px', borderRadius: 12,
+                        border: `1px solid ${selected ? 'rgba(124,92,244,0.45)' : 'var(--border)'}`,
+                        background: selected
+                          ? 'linear-gradient(90deg, rgba(124,92,244,0.14) 0%, rgba(13,214,184,0.06) 100%)'
+                          : 'var(--bg3)',
+                        display: 'flex', alignItems: 'center', gap: 16,
+                        cursor: 'pointer', textAlign: 'left',
+                        transition: 'all 0.18s',
+                        boxShadow: selected ? '0 2px 14px rgba(124,92,244,0.2)' : 'none',
+                      }}
+                    >
+                      <span style={{ fontSize: 22, flexShrink: 0 }}>{t.emoji}</span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          fontWeight: 600, fontSize: 14,
+                          color: selected ? 'var(--text)' : 'var(--text2)',
+                        }}>{t.label}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t.desc}</div>
+                      </div>
+                      {selected && (
+                        <div style={{
+                          width: 20, height: 20, borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #7c5cf4, #0dd6b8)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          flexShrink: 0,
+                        }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          </CardBody>
+        </Card>
+
+        {/* Lead Capture Toggle */}
+        <Card>
+          <CardBody style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 5 }}>
+                <span style={{ fontSize: 18 }}>🎯</span>
+                <span style={{ fontWeight: 600, fontSize: 15 }}>Lead Capture</span>
+                {form.leadCapture && <Badge variant="success">Active</Badge>}
+              </div>
+              <p style={{ fontSize: 13, color: 'var(--text2)', maxWidth: 440 }}>
+                Automatically collect visitor contact info when they show buying intent. Leads appear in your dashboard.
+              </p>
+            </div>
+            <Toggle checked={form.leadCapture} onChange={v => set('leadCapture', v)} />
+          </CardBody>
+        </Card>
+
+        {/* Error */}
+        {error && (
+          <div style={{
+            background: 'var(--red-bg)', border: '1px solid rgba(245,90,90,0.25)',
+            borderRadius: 10, padding: '12px 16px',
+            color: 'var(--red)', fontSize: 13,
+            display: 'flex', alignItems: 'center', gap: 8,
           }}>
-            <span style={{
-              position: 'absolute', top: 3, left: form.leadCapture ? 25 : 3,
-              width: 20, height: 20, borderRadius: '50%', background: '#fff',
-              transition: 'left 0.2s', display: 'block',
-            }} />
-          </button>
-        </div>
-
-        {error && <p style={{ color: 'var(--red)', fontSize: 13 }}>{error}</p>}
-
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button type="submit" disabled={loading} style={{
-            padding: '12px 28px', borderRadius: 10, border: 'none', fontWeight: 600, fontSize: 14,
-            background: saved ? 'var(--green)' : 'linear-gradient(135deg, #7c6ef5, #a78bfa)',
-            color: '#fff', boxShadow: '0 4px 16px var(--accent-glow)',
-            opacity: loading ? 0.7 : 1, transition: 'background 0.3s',
-          }}>
-            {loading ? 'Saving…' : saved ? '✓ Saved!' : 'Save Changes'}
-          </button>
-          <button type="button" onClick={() => navigate('/deploy')} style={{
-            padding: '12px 28px', borderRadius: 10, border: '1px solid var(--border2)',
-            background: 'var(--surface)', color: 'var(--text)', fontWeight: 600, fontSize: 14,
-          }}>Deploy →</button>
-        </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            {error}
+          </div>
+        )}
       </form>
     </div>
   );

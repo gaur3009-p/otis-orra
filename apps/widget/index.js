@@ -79,6 +79,13 @@
         addMessage(ui.messages, msg.text, 'bot');
       } else if (msg.type === 'audio') {
         await audioPlayer.play(msg.data, msg.mimeType);
+      } else if (msg.type === 'tts_fallback') {
+        try {
+          const utterance = new SpeechSynthesisUtterance(msg.text);
+          window.speechSynthesis.speak(utterance);
+        } catch (err) {
+          console.warn('[Orra] Browser SpeechSynthesis failed:', err.message);
+        }
       } else if (msg.type === 'lead_capture_trigger') {
         showLeadForm(ui.messages, (leadData) => submitLead(leadData));
       } else if (msg.type === 'error') {

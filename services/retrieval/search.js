@@ -1,9 +1,25 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const OpenAI = require('openai');
 const { Pinecone } = require('@pinecone-database/pinecone');
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const { logger } = require('@orra/shared');
+
+const openai = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
+});
 let index;
+
+function getLocalEmbedding(text) {
+  const vector = new Array(1024).fill(0);
+  for (let i = 0; i < text.length; i++) {
+    const charCode = text.charCodeAt(i);
+    const index = (i * 31 + charCode) % 1024;
+    vector[index] += charCode;
+  }
+  const magnitude = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0)) || 1;
+  return vector.map(val => val / magnitude);
+}
 
 async function getIndex() {
   if (!index) {
@@ -16,12 +32,17 @@ async function getIndex() {
 async function searchChunks(query, namespace, topK = 5) {
   const idx = await getIndex();
 
-  const embRes = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
-    input: query,
-  });
-
-  const queryEmbedding = embRes.data[0].embedding;
+  let queryEmbedding;
+  try {
+    const embRes = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: query,
+    });
+    queryEmbedding = embRes.data[0].embedding;
+  } catch (err) {
+    logger.warn(`Groq embedding failed, falling back to local deterministic embedding: ${err.message}`);
+    queryEmbedding = getLocalEmbedding(query);
+  }
 
   const results = await idx.namespace(namespace).query({
     vector: queryEmbedding,

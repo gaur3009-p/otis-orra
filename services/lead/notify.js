@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const nodemailer = require('nodemailer');
 const { logger } = require('@orra/shared');
 

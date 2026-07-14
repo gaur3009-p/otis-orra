@@ -1,34 +1,46 @@
-// No npm package needed — Kokoro runs as a local HTTP server (Docker)
-// KOKORO_URL=http://localhost:8300 in your .env
-
 const { logger } = require('@orra/shared');
 
-// Kokoro voice IDs (26 voices available)
+// ElevenLabs voice IDs mapped from standard options
 const VOICE_MAP = {
-  alloy:   'af_alloy',
-  echo:    'am_echo',
-  fable:   'bf_emma',
-  onyx:    'am_onyx',
-  nova:    'af_nova',
-  shimmer: 'af_shimmer',
+  alloy: '21m00Tcm4TlvDq8ikWAM', // Rachel
+  echo: 'AZnzlk1XyUDgxwfuz5yl', // Dom
+  fable: 'EXAVITQu4vr4xnSDxMaL', // Bella
+  onyx: 'ErXwobaYiN019PkySvjV', // Antoni
+  nova: 'piTKgcLEGmPEe24241C2', // Nicole
+  shimmer: 'jsCqZswCgpaGgV5exBup', // Freya
 };
 
 async function textToSpeech(text, voiceId = 'nova') {
-  const kokoroVoice = VOICE_MAP[voiceId] || VOICE_MAP.nova;
-  const kokoroUrl = process.env.KOKORO_URL || 'http://localhost:8300';
+  // Use configured ELEVENLABS_VOICE_ID or map the name, fallback to Rachel
+  const selectedVoice = process.env.ELEVENLABS_VOICE_ID || VOICE_MAP[voiceId] || VOICE_MAP.nova;
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('ELEVENLABS_API_KEY is not configured in .env');
+  }
 
   try {
-    const response = await fetch(`${kokoroUrl}/api/tts`, {
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${selectedVoice}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+        accept: 'audio/mpeg',
+      },
       body: JSON.stringify({
         text,
-        voice: kokoroVoice,
-        speed: 1.0,
+        model_id: 'eleven_turbo_v2_5',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.5,
+        },
       }),
     });
 
-    if (!response.ok) throw new Error(`Kokoro TTS error: ${response.status}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`ElevenLabs TTS error (${response.status}): ${errorText}`);
+    }
 
     const arrayBuffer = await response.arrayBuffer();
     return Buffer.from(arrayBuffer);

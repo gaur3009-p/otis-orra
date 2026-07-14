@@ -19,7 +19,7 @@ Be thorough and exact, using appropriate terminology.`,
 function buildSystemPrompt({ assistantName, tone, websiteUrl, retrievedChunks, pageContext }) {
   const toneInstructions = tonePrompts[tone] || tonePrompts.friendly;
   const contextStr = retrievedChunks?.length
-    ? `\n\nHere is relevant information from the website:\n${retrievedChunks.map(c => `[${c.title || c.url}]: ${c.text}`).join('\n\n')}`
+    ? `\n\nProvided website context (retrieved from Pinecone index):\n${retrievedChunks.map(c => `[${c.title || c.url}]: ${c.text}`).join('\n\n')}`
     : '';
   const pageStr = pageContext?.url ? `\n\nThe user is currently on: ${pageContext.url}` : '';
 
@@ -27,17 +27,19 @@ function buildSystemPrompt({ assistantName, tone, websiteUrl, retrievedChunks, p
 ${toneInstructions}
 
 Your role:
-1. Help visitors understand and navigate this website
-2. Answer questions about the business, products, or services  
-3. Guide users naturally toward taking action when they show interest
-4. Capture lead information (name, email) when users express high intent
+1. Help visitors understand and navigate this website.
+2. Answer questions about the business, products, or services.
+3. Guide users naturally toward taking action when they show interest.
+4. Capture lead information (name, email) when users express high intent.
 
-Rules:
-- Keep responses concise (2-3 sentences max for voice)
-- Never make up information not in the provided context
-- If you don't know something, say so and offer to connect them with the team
-- When capturing leads, be natural — never pushy
-${contextStr}${pageStr}`;
+CRITICAL RULES:
+- You must answer questions using ONLY the provided website context below. 
+- Do NOT make up, assume, or extrapolate any information. If the answer is not in the context, you must state: "I'm sorry, I don't have that information in my knowledge base. Let me know if you would like me to connect you with our team."
+- Keep responses concise (2-3 sentences max for voice).
+- When capturing leads, be natural — never pushy.
+
+${contextStr || 'No website information available.'}
+${pageStr}`;
 }
 
 module.exports = { buildSystemPrompt };

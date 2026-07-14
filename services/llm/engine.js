@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const OpenAI = require('openai');
 const axios = require('axios');
 const { buildSystemPrompt } = require('./prompts');
@@ -6,12 +6,11 @@ const { getHistory, appendMessage } = require('./memory');
 const { classifyIntent } = require('./intent');
 const { logger } = require('@orra/shared');
 
-// ── FREE STACK: Ollama instead of OpenAI ──────────────────────────────────────
-// Ollama exposes an OpenAI-compatible API at /v1 — the SDK works unchanged.
-// Set OLLAMA_BASE_URL in .env (default: http://localhost:11434)
+// ── GROQ STACK ──────────────────────────────────────────────────────────────     ──
+// Initialize OpenAI client pointed to Groq's OpenAI-compatible API
 const openai = new OpenAI({
-  baseURL: `${process.env.OLLAMA_BASE_URL || 'http://localhost:11434'}/v1`,
-  apiKey: 'ollama', // Ollama ignores this but the SDK requires a non-empty string
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: 'https://api.groq.com/openai/v1',
 });
 
 const RETRIEVAL_URL = process.env.RETRIEVAL_SERVICE_URL || 'http://localhost:3002';
@@ -44,7 +43,7 @@ async function runLLM({ sessionId, userMessage, businessId, assistantConfig, pag
   ];
 
   const completion = await openai.chat.completions.create({
-    model: process.env.OLLAMA_MODEL || 'llama3.2', // ← was: 'gpt-4o-mini'
+    model: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
     messages,
     max_tokens: 200,
     temperature: 0.7,
@@ -53,8 +52,8 @@ async function runLLM({ sessionId, userMessage, businessId, assistantConfig, pag
 
   const assistantReply = completion.choices[0].message.content;
 
-  await appendMessage(sessionId, 'user', userMessage);
-  await appendMessage(sessionId, 'assistant', assistantReply);
+  await appendMessage(sessionId, 'user', userMessage, businessId);
+  await appendMessage(sessionId, 'assistant', assistantReply, businessId);
 
   return { reply: assistantReply, intent, retrievedChunks };
 }

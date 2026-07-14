@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../../.env') });
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
@@ -78,8 +78,15 @@ router.post('/assistant', requireAuth, async (req, res) => {
 
     // Trigger crawl in background
     axios.post(`${RETRIEVAL_URL}/crawl`, { websiteUrl, businessId: req.businessId })
-      .then(() => prisma.assistant.update({ where: { id: assistant.id }, data: { crawlStatus: 'done' } }))
-      .catch((err) => prisma.assistant.update({ where: { id: assistant.id }, data: { crawlStatus: 'error' } }));
+      .then(async (crawlRes) => {
+        // Always mark done — if site was private/blocked, retrieval service
+        // preserved existing knowledge base and returned early
+        await prisma.assistant.update({ where: { id: assistant.id }, data: { crawlStatus: 'done' } });
+      })
+      .catch(async (err) => {
+        console.error('Crawl request failed:', err.message);
+        await prisma.assistant.update({ where: { id: assistant.id }, data: { crawlStatus: 'error' } });
+      });
 
     res.json({ assistant });
   } catch (err) {
@@ -127,6 +134,95 @@ router.get('/stats', requireAuth, async (req, res) => {
       }),
     ]);
     res.json({ totalLeads, totalConversations, recentLeads });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /business/knowledge-base
+router.get('/knowledge-base', requireAuth, async (req, res) => {
+  try {
+    const pages = await prisma.websiteData.findMany({
+      where: { businessId: req.businessId },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json({ pages });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /business/custom-content
+router.post('/custom-content', requireAuth, async (req, res) => {
+  const { title, content, url } = req.body;
+  if (!content) return res.status(400).json({ error: 'Content is required' });
+
+  try {
+    let assistant = await prisma.assistant.findFirst({ where: { businessId: req.businessId } });
+    if (!assistant) {
+      assistant = await prisma.assistant.create({
+        data: {
+          businessId: req.businessId,
+          name: 'Orra',
+          voice: 'nova',
+          tone: 'friendly',
+          websiteUrl: url || 'https://custom-import.local',
+          crawlStatus: 'crawling'
+        }
+      });
+    } else {
+      assistant = await prisma.assistant.update({
+        where: { id: assistant.id },
+        data: { crawlStatus: 'crawling' }
+      });
+    }
+
+    axios.post(`${RETRIEVAL_URL}/custom-content`, {
+      title,
+      content,
+      url,
+      businessId: req.businessId
+    })
+      .then(() => prisma.assistant.update({ where: { id: assistant.id }, data: { crawlStatus: 'done' } }))
+      .catch((err) => {
+        console.error('Custom content indexing failed:', err.message);
+        prisma.assistant.update({ where: { id: assistant.id }, data: { crawlStatus: 'error' } });
+      });
+
+    res.json({ success: true, assistant });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /business/knowledge-base/:id
+router.delete('/knowledge-base/:id', requireAuth, async (req, res) => {
+  try {
+    const page = await prisma.websiteData.findFirst({
+      where: { id: req.params.id, businessId: req.businessId }
+    });
+    if (!page) return res.status(404).json({ error: 'Page not found' });
+
+    await prisma.websiteData.delete({ where: { id: page.id } });
+
+    const assistant = await prisma.assistant.findFirst({ where: { businessId: req.businessId } });
+    if (assistant) {
+      await prisma.assistant.update({
+        where: { id: assistant.id },
+        data: { crawlStatus: 'crawling' }
+      });
+    }
+
+    axios.post(`${RETRIEVAL_URL}/sync`, { businessId: req.businessId })
+      .then(() => {
+        if (assistant) prisma.assistant.update({ where: { id: assistant.id }, data: { crawlStatus: 'done' } });
+      })
+      .catch(err => {
+        console.error(`Sync after delete failed: ${err.message}`);
+        if (assistant) prisma.assistant.update({ where: { id: assistant.id }, data: { crawlStatus: 'error' } });
+      });
+
+    res.json({ success: true, message: 'Page deleted and sync triggered' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

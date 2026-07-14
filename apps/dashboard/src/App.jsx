@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Layout from './components/Layout';
 import Onboarding from './pages/Onboarding';
@@ -33,8 +34,8 @@ export default function App() {
     <AuthCtx.Provider value={{ auth, login, logout }}>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={auth ? <Navigate to="/onboarding" replace /> : <Login />} />
-          <Route path="/" element={auth ? <Navigate to="/onboarding" replace /> : <Navigate to="/login" replace />} />
           <Route element={auth ? <Layout /> : <Navigate to="/login" replace />}>
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/customize" element={<Customize />} />
